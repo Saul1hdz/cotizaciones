@@ -8,12 +8,38 @@ const App = () => {
   const [cliente, setCliente] = useState('BELLEZA Y COSMETICOS S.A DE C.V.');
 
   // Estado para almacenar la lista de productos
-  const [productos, setProductos] = useState([
-    { nombre: 'Licencia Easyfact – Facturación electrónica (Costo Mensual)', cantidad: 2, precio: 50.0 },
-  ]);
+  const [productos, setProductos] = useState([]);
+
+  // Estado para el producto actual que se está agregando
+  const [productoActual, setProductoActual] = useState({
+    nombre: '',
+    cantidad: 1,
+    precio: 0.0,
+  });
 
   // Referencia para el contenido que se convertirá en PDF
   const cotizacionRef = useRef(null);
+
+  // Función para manejar cambios en los campos del formulario
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setProductoActual({
+      ...productoActual,
+      [name]: name === 'cantidad' || name === 'precio' ? parseFloat(value) : value,
+    });
+  };
+
+  // Función para agregar un nuevo producto a la lista
+  const agregarProducto = (e) => {
+    e.preventDefault(); // Evita que el formulario se envíe
+
+    if (productoActual.nombre && productoActual.cantidad && productoActual.precio) {
+      setProductos([...productos, productoActual]); // Agrega el producto a la lista
+      setProductoActual({ nombre: '', cantidad: 1, precio: 0.0 }); // Reinicia el formulario
+    } else {
+      alert('Por favor, complete todos los campos del producto.');
+    }
+  };
 
   // Función para generar el PDF
   const handleDownloadPDF = () => {
@@ -57,10 +83,7 @@ const App = () => {
       <h1>Generar Cotización</h1>
       <form
         className="formulario"
-        onSubmit={(e) => {
-          e.preventDefault(); // Evita que el formulario se envíe
-          handleDownloadPDF(); // Genera el PDF
-        }}
+        onSubmit={agregarProducto} // Agrega el producto al enviar el formulario
       >
         <div className="campo">
           <label>
@@ -73,58 +96,86 @@ const App = () => {
           </label>
         </div>
 
-        <h3>Productos</h3>
-        {productos.map((producto, index) => (
-          <div className="producto" key={index}>
-            <div className="campo">
-              <label>
-                Nombre del producto:
-                <input
-                  type="text"
-                  value={producto.nombre}
-                  onChange={(e) => {
-                    const nuevosProductos = [...productos];
-                    nuevosProductos[index].nombre = e.target.value; // Actualiza el nombre del producto
-                    setProductos(nuevosProductos);
-                  }}
-                />
-              </label>
-            </div>
-            <div className="campo">
-              <label>
-                Cantidad:
-                <input
-                  type="number"
-                  value={producto.cantidad}
-                  onChange={(e) => {
-                    const nuevosProductos = [...productos];
-                    nuevosProductos[index].cantidad = e.target.value; // Actualiza la cantidad
-                    setProductos(nuevosProductos);
-                  }}
-                />
-              </label>
-            </div>
-            <div className="campo">
-              <label>
-                Precio:
-                <input
-                  type="number"
-                  value={producto.precio}
-                  onChange={(e) => {
-                    const nuevosProductos = [...productos];
-                    nuevosProductos[index].precio = parseFloat(e.target.value); // Convierte el precio a número
-                    setProductos(nuevosProductos);
-                  }}
-                />
-              </label>
-            </div>
-          </div>
-        ))}
+        <h3>Agregar Producto</h3>
+        <div className="campo">
+          <label>
+            Nombre del producto:
+            <input
+              type="text"
+              name="nombre"
+              value={productoActual.nombre}
+              onChange={handleChange} // Maneja cambios en el nombre
+            />
+          </label>
+        </div>
+        <div className="campo">
+          <label>
+            Cantidad:
+            <input
+              type="number"
+              name="cantidad"
+              value={productoActual.cantidad}
+              onChange={handleChange} // Maneja cambios en la cantidad
+            />
+          </label>
+        </div>
+        <div className="campo">
+          <label>
+            Precio:
+            <input
+              type="number"
+              name="precio"
+              value={productoActual.precio}
+              onChange={handleChange} // Maneja cambios en el precio
+            />
+          </label>
+        </div>
 
-        <button type="submit" className="boton">Generar PDF</button>
+        {/* Botón para agregar el producto */}
+        <button type="submit" className="boton agregar">
+          AGREGAR PRODUCTO
+        </button>
       </form>
 
-      {/* Contenido que se convertirá en PDF */}
+      {/* Lista de productos */}
+      <div className="lista-productos">
+        <h3>Lista de Productos</h3>
+        <table className="tabla-lista">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Cantidad</th>
+              <th>Precio Unit.</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {productos.map((producto, index) => (
+              <tr key={index}>
+                <td>{producto.nombre}</td>
+                <td>{producto.cantidad}</td>
+                <td>${parseFloat(producto.precio).toFixed(2)}</td>
+                <td>${(producto.cantidad * parseFloat(producto.precio)).toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Vista previa del PDF */}
+      <div className="preview-pdf">
+        <h3>Vista Previa del PDF</h3>
+        <div className="preview-contenido">
+          <CotizacionContent cliente={cliente} productos={productos} />
+        </div>
+      </div>
+
+      {/* Botón para generar el PDF */}
+      <button type="button" className="boton generar" onClick={handleDownloadPDF}>
+        Generar PDF
+      </button>
+
+      {/* Contenido que se convertirá en PDF (oculto) */}
       <div ref={cotizacionRef} style={{ position: 'absolute', left: '-9999px' }}>
         <CotizacionContent cliente={cliente} productos={productos} />
       </div>
@@ -163,7 +214,6 @@ const CotizacionContent = ({ cliente, productos }) => {
       <table className="tabla">
         <thead>
           <tr>
-            <th>Imagen</th>
             <th>Descripción</th>
             <th>Cantidad</th>
             <th>Precio Unit.</th>
@@ -173,7 +223,6 @@ const CotizacionContent = ({ cliente, productos }) => {
         <tbody>
           {productos.map((producto, index) => (
             <tr key={index}>
-              <td></td>
               <td>{producto.nombre}</td>
               <td>{producto.cantidad}</td>
               <td>${parseFloat(producto.precio).toFixed(2)}</td>
@@ -181,17 +230,17 @@ const CotizacionContent = ({ cliente, productos }) => {
             </tr>
           ))}
           <tr>
-            <td colSpan="4">Sub-Total IVA</td>
+            <td colSpan="3">Sub-Total IVA</td>
             <td>${subtotal.toFixed(2)}</td>
           </tr>
           <tr>
-            <td colSpan="4">Total</td>
+            <td colSpan="3">Total</td>
             <td>${totalConIva.toFixed(2)}</td>
           </tr>
         </tbody>
       </table>
 
-      <section className="terminos">
+      {/* <section className="terminos">
         <h2>TÉRMINOS Y CONDICIONES</h2>
         <ol>
           <li>Los precios descritos son al contado, efectivo o cheque.</li>
@@ -204,7 +253,7 @@ const CotizacionContent = ({ cliente, productos }) => {
           <li>Envío de facturas a los clientes por correo y por WhatsApp.</li>
           <li>Mejoras continuas al software.</li>
         </ol>
-      </section>
+      </section> */}
 
       <footer className="footer">
         <p>
