@@ -17,6 +17,18 @@ const App = () => {
     precio: 0.0,
   });
 
+  // Estado para controlar la visibilidad del modal de configuración
+  const [modalAbierto, setModalAbierto] = useState(false);
+
+  // Estado para los datos de configuración
+  const [configuracion, setConfiguracion] = useState({
+    nit: '1234-567890-123-4',
+    nrc: '12345678',
+    razonSocial: 'BELLEZA Y COSMETICOS S.A DE C.V.',
+    nombreComercial: 'BELLEZA Y COSMETICOS',
+    actividadEconomica: 'Venta de productos de belleza y cosméticos',
+  });
+
   // Referencia para el contenido que se convertirá en PDF
   const cotizacionRef = useRef(null);
 
@@ -26,6 +38,15 @@ const App = () => {
     setProductoActual({
       ...productoActual,
       [name]: name === 'cantidad' || name === 'precio' ? parseFloat(value) : value,
+    });
+  };
+
+  // Función para manejar cambios en los campos de configuración
+  const handleChangeConfiguracion = (e) => {
+    const { name, value } = e.target;
+    setConfiguracion({
+      ...configuracion,
+      [name]: value,
     });
   };
 
@@ -80,6 +101,81 @@ const App = () => {
 
   return (
     <div className="app">
+      {/* Ícono de configuración */}
+      <div className="icono-configuracion" onClick={() => setModalAbierto(true)}>
+        ⚙️
+      </div>
+
+      {/* Modal de configuración */}
+      {modalAbierto && (
+        <div className="modal">
+          <div className="modal-contenido">
+            <h2>Configuración</h2>
+            <div className="campo">
+              <label>
+                Nit:
+                <input
+                  type="text"
+                  name="nit"
+                  value={configuracion.nit}
+                  onChange={handleChangeConfiguracion}
+                />
+              </label>
+            </div>
+            <div className="campo">
+              <label>
+                Nrc:
+                <input
+                  type="text"
+                  name="nrc"
+                  value={configuracion.nrc}
+                  onChange={handleChangeConfiguracion}
+                />
+              </label>
+            </div>
+            <div className="campo">
+              <label>
+                Nombre o razón social:
+                <input
+                  type="text"
+                  name="razonSocial"
+                  value={configuracion.razonSocial}
+                  onChange={handleChangeConfiguracion}
+                />
+              </label>
+            </div>
+            <div className="campo">
+              <label>
+                Nombre comercial:
+                <input
+                  type="text"
+                  name="nombreComercial"
+                  value={configuracion.nombreComercial}
+                  onChange={handleChangeConfiguracion}
+                />
+              </label>
+            </div>
+            <div className="campo">
+              <label>
+                Actividad económica:
+                <input
+                  type="text"
+                  name="actividadEconomica"
+                  value={configuracion.actividadEconomica}
+                  onChange={handleChangeConfiguracion}
+                />
+              </label>
+            </div>
+            <button
+              className="boton cerrar"
+              onClick={() => setModalAbierto(false)}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+
       <h1>Generar Cotización</h1>
       <form
         className="formulario"
@@ -166,7 +262,11 @@ const App = () => {
       <div className="preview-pdf">
         <h3>Vista Previa del PDF</h3>
         <div className="preview-contenido">
-          <CotizacionContent cliente={cliente} productos={productos} />
+          <CotizacionContent
+            cliente={cliente}
+            productos={productos}
+            configuracion={configuracion}
+          />
         </div>
       </div>
 
@@ -177,14 +277,18 @@ const App = () => {
 
       {/* Contenido que se convertirá en PDF (oculto) */}
       <div ref={cotizacionRef} style={{ position: 'absolute', left: '-9999px' }}>
-        <CotizacionContent cliente={cliente} productos={productos} />
+        <CotizacionContent
+          cliente={cliente}
+          productos={productos}
+          configuracion={configuracion}
+        />
       </div>
     </div>
   );
 };
 
 // Componente para el contenido de la cotización
-const CotizacionContent = ({ cliente, productos }) => {
+const CotizacionContent = ({ cliente, productos, configuracion }) => {
   // Calcula el total, subtotal, IVA y total con IVA
   const total = productos.reduce((sum, producto) => sum + producto.cantidad * parseFloat(producto.precio), 0);
   const subtotal = total;
@@ -201,6 +305,15 @@ const CotizacionContent = ({ cliente, productos }) => {
       <section className="cliente">
         <p>Estimados:</p>
         <p><strong>{cliente}</strong></p>
+      </section>
+
+      {/* Información de configuración */}
+      <section className="configuracion">
+        <p><strong>Nit:</strong> {configuracion.nit}</p>
+        <p><strong>Nrc:</strong> {configuracion.nrc}</p>
+        <p><strong>Nombre o razón social:</strong> {configuracion.razonSocial}</p>
+        <p><strong>Nombre comercial:</strong> {configuracion.nombreComercial}</p>
+        <p><strong>Actividad económica:</strong> {configuracion.actividadEconomica}</p>
       </section>
 
       <section className="descripcion">
