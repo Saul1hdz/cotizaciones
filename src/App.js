@@ -379,3 +379,4 @@ const CotizacionContent = ({ cliente, productos, configuracion }) => {
 };
 
 export default App;
+
